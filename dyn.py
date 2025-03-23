@@ -87,17 +87,18 @@ if __name__ == "__main__":
     X_grid, Y_grid = torch.meshgrid(x_vals, y_vals, indexing='ij')  # both (5, 4)
     X = torch.stack([X_grid.flatten(), Y_grid.flatten()], dim=1)  # (20, 2)
 
-    X = X[(X[:, 1] - torch.abs(X[:, 0] - 2)) > 1.8]
+    X = X[((X[:, 0] - 2.5)/2.5)**2 + ((X[:, 1] - 2.5)/2)**2 < 1]
+    X += torch.tensor([0, 3.0])
     V = torch.zeros(size=(X.shape))
-    V += torch.tensor([0.4, 0.4]) + torch.rand(size=(V.shape))*0.1
+    V += torch.tensor([2.0, 5.0]) + torch.rand(size=(V.shape))*0.1
 
-    V[X[:, 0] < 2] += torch.tensor([0, 1.0])
-    V[X[:, 0] > 2] += torch.tensor([0, -1.0])
+    V[X[:, 0] < 2] += torch.tensor([0, 3.0])
+    V[X[:, 0] > 2] += torch.tensor([0, 0.0])
     K, _ = pairwise_distances_and_directions(X)
     Kc = K.clone().detach()
     Kc[K < 1.5*STEP_SIZE] = 1
     Kc[K > 1.5*STEP_SIZE] = 0
-    K = Kc*250.0
+    K = Kc*150.0
     K.diagonal().fill_(0.0)
 
     K[X[:, 1] < 2] *= 0.3
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     M = torch.ones(X.shape[0])*0.1
 
 # Stack into shape (n, 2) = (5*4, 2)
-    ani = animate(X, V, M, K, L, fps=30, tot_time=5)
+    ani = animate(X, V, M, K, L, fps=30, tot_time=15)
 #    plt.show()
     ani.save("animation.gif", writer='ffmpeg')
 
